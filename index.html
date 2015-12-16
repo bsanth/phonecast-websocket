@@ -1,0 +1,114 @@
+<script src="jquery-2.1.4.min.js" ></script>
+<script src="jquery-touchswipe.min.js" ></script>
+<script>
+   function fetchBlob(uri, callback) {
+     var xhr = new XMLHttpRequest();
+     xhr.open('GET', uri, true);
+     xhr.responseType = 'arraybuffer';
+
+     xhr.onload = function(e) {
+       if (this.status == 200) {
+         var blob = this.response;
+         if (callback) {
+           callback(blob);
+         }
+       }
+     };
+     xhr.send();
+   };
+
+   function _arrayBufferToBase64(buffer) {
+       var binary = '';
+       var bytes = new Uint8Array(buffer);
+       var len = bytes.byteLength;
+       for (var i = 0; i < len; i++) {
+           binary += String.fromCharCode(bytes[i]);
+       }
+       return window.btoa(binary);
+   };
+
+   var getScreenshot = function() {
+      fetchBlob('screenshots/screen.jpeg', function(blob) {
+         var temp = _arrayBufferToBase64(blob);
+         $("#screenshot").attr("src",'data:image/jpeg;base64,'+ temp);
+      });
+      setTimeout(getScreenshot, 0);
+   };
+
+   getScreenshot();
+
+   // Set screen size
+   $.getJSON("/api/dimensions", function(result){
+      $("#screenshot").width(result.width/3);
+      $("#screenshot").height(result.height/3);
+   });
+
+   $(function() {
+      var swiped = false;
+      var postTouchEvent = function(e) {
+         if(!swiped) {
+            $.post("/api/touch", { "x": e.offsetX*3, "y": e.offsetY*3});
+            swiped = false;
+         }
+      };
+
+      // Get click event
+      $("#screenshot").click(function(e) {
+         setTimeout(postTouchEvent(e), 0);
+      });
+
+      $("#screenshot").swipe( {
+         // Tap does not work. Change to tap after it is fixed.
+         // tap:function(e, target) {
+         //    $.post("/api/touch", { "x": e.offsetX*3, "y": e.offsetY*3});
+         // },
+         swipe:function(event, direction, distance, duration, fingerCount, fingerData) {
+            swiped = true;
+            $.post("/api/swipe", {
+               "startX": fingerData[0].start.x*3,
+               "startY": fingerData[0].start.y*3,
+               "endX": event.offsetX*3,
+               "endY": event.offsetY*3,
+               "duration": duration
+            }).success(function(data) {
+               swiped = false;
+            });
+         },
+
+         //Default is 75px, set to 0 for demo so any distance triggers swipe
+         threshold:75
+      });
+
+      $(document).bind("keypress", function(event) {
+        if ( event.which == 13 ) {
+            event.preventDefault();
+            $.post("/api/key", { "key": 66});
+        } else if (event.which == 32) {
+            if( event.target.disabled || event.target.readOnly ){
+                event.preventDefault();
+            }
+            $.post("/api/key", { "key": "%s"});
+        } else {
+            $.post("/api/key", { "key": String.fromCharCode(event.keyCode)});
+        }
+      });
+
+      $(document).bind("keydown keypress", function(event) {
+         if (event.which == 8) {
+            event.preventDefault();
+            $.post("/api/key", { "key": 67});
+         }
+      });
+   })
+
+</script>
+<style type="text/css">
+   img {
+      width: 400px;
+   }
+</style>
+<div id="image-div">
+   <span id="test">
+      <img src="" id="screenshot">
+   </span>
+</div>
