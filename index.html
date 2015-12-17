@@ -2,6 +2,11 @@
 <script src="jquery-touchswipe.min.js" ></script>
 <script>
 
+    var recordedActions=[];
+    var record = false;
+    var screenshotIndex = 0;
+    var runScreenshotIndex = 0;
+
   // if user is running mozilla then use it's built-in WebSocket
     window.WebSocket = window.WebSocket || window.MozWebSocket;
 
@@ -66,17 +71,70 @@
 
    getScreenshot();
 
-   // Set screen size
-   // $.getJSON("/api/dimensions", function(result){
-   //    $("#screenshot").width(result.width/3);
-   //    $("#screenshot").height(result.height/3);
-   // });
+    var logActions = function () {
+      console.log(recordedActions);
+    };
+
+    var startRecording = function () {
+      console.log("Started recording");
+      record = true;
+    };
+
+    var stopRecording = function () {
+      console.log("Stopped recording");
+      record = false;
+    };
+
+    var captureState = function () {
+      console.log("Capturing state");
+      screenshotIndex += 1;
+      var strToSend = JSON.stringify({"type":"capture", "filename":"test"});
+      if(record) {
+        recordedActions.push(JSON.stringify({"type":"capture-run", "filename":"run"}));
+      }
+      connection.send(strToSend);
+    };
+
+    var intervalRef;
+    var replayActions = function () {
+      console.log("Replaying next action");
+      record = false;
+      if(recordedActions[0] == JSON.stringify({"type":"capture-run", "filename":"run"})) {
+        console.log("RUN CAPTURE");
+        intervalRef = setTimeout(play, 2000);
+      } else {
+        intervalRef = setTimeout(play, 1000);
+      }
+    };
+
+    var play = function () {
+      var strToSend = recordedActions.shift();
+      connection.send(strToSend);
+      if(recordedActions.length === 0) {
+        console.log("Replay done.");
+      } else {
+        if(strToSend == JSON.stringify({"type":"capture-run", "filename":"run"})) {
+          setTimeout(replayActions, 500);
+        } else {
+          replayActions();
+        }
+      }
+    };
+
+    var openResultsTab = function () {
+      window.open('/bora#?i=' + screenshotIndex);
+      screenshotIndex = 0;
+    };
 
    $(function() {
 
       $("#screenshot").swipe( {
          tap:function(e, target) {
-            connection.send(JSON.stringify({ "x": e.offsetX*3, "y": e.offsetY*3, "type":"click"}));
+            var strToSend = JSON.stringify({ "x": e.offsetX*3, "y": e.offsetY*3, "type":"click"});
+            if(record) {
+              recordedActions.push(strToSend);
+            }
+            connection.send(strToSend);
          },
          swipe:function(event, direction, distance, duration, fingerCount, fingerData) {
             swiped = true;
@@ -88,7 +146,11 @@
                "duration": duration,
                "type":"swipe"
             };
-            connection.send(JSON.stringify(jsonString));
+            var strToSend = JSON.stringify(jsonString);
+            if(record) {
+              recordedActions.push(strToSend);
+            }
+            connection.send(strToSend);
          },
 
          //Default is 75px, set to 0 for demo so any distance triggers swipe
@@ -98,21 +160,37 @@
       $(document).bind("keypress", function(event) {
         if ( event.which == 13 ) {
             event.preventDefault();
-            connection.send(JSON.stringify({ "key": 66, "type":"key"}));
+            var strToSend = JSON.stringify({ "key": 66, "type":"key"});
+            if(record) {
+              recordedActions.push(strToSend);
+            }
+            connection.send(strToSend);
         } else if (event.which == 32) {
             if( event.target.disabled || event.target.readOnly ){
                 event.preventDefault();
             }
-            connection.send(JSON.stringify({ "key": "%s", "type":"key"}));
+            var strToSend = JSON.stringify({ "key": "%s", "type":"key"});
+            if(record) {
+              recordedActions.push(strToSend);
+            }
+            connection.send(strToSend);
         } else {
-            connection.send(JSON.stringify({ "key": String.fromCharCode(event.keyCode), "type":"key"}));
+            var strToSend = JSON.stringify({ "key": String.fromCharCode(event.keyCode), "type":"key"});
+            if(record) {
+              recordedActions.push(strToSend);
+            }
+            connection.send(strToSend);
         }
       });
 
       $(document).bind("keydown keypress", function(event) {
          if (event.which == 8) {
             event.preventDefault();
-            connection.send(JSON.stringify({ "key": 67, "type":"key"}));
+            var strToSend = JSON.stringify({ "key": 67, "type":"key"});
+            if(record) {
+              recordedActions.push(strToSend);
+            }
+            connection.send(strToSend);
          }
       });
    })
@@ -125,3 +203,9 @@
       <img src="" id="screenshot">
    </span>
 </div>
+<br />
+<button onclick="startRecording()">Record</button><br />
+<button onclick="captureState()">Capture State</button><br />
+<button onclick="stopRecording()">Stop</button><br />
+<button onclick="replayActions()">Replay actions</button><br />
+<button onclick="openResultsTab()">Show results</button>

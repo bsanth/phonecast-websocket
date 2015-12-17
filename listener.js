@@ -4,6 +4,8 @@ var exec = require('child_process').exec;
 
 var width = 0;
 var height = 0;
+var screenshotIndex = 0;
+var runScreenshotIndex = 0;
 
 var server = http.createServer(function(request, response) {
     // process HTTP request. Since we're writing just WebSockets server
@@ -48,12 +50,24 @@ wsServer.on('request', function(request) {
                    console.log(error);
                 });
             } else if (json.type == "dimensions") {
+                screenshotIndex = 0;
+                runScreenshotIndex = 0;
                 exec('adb shell wm size', function(error, stdout, stderr) {
                   var wxh = stdout.split(':')[1].trim();
                   width = wxh.split('x')[0];
                   height = wxh.split('x')[1];
                   console.log(width + ' ' + height);
                   connection.send(JSON.stringify({ width: width, height:height }));
+               });
+            } else if (json.type == "capture") {
+                exec('ditto screenshots/screen.jpeg screenshots/' + json.filename + '/' + screenshotIndex + '.jpeg', function(error, stdout, stderr) {
+                    screenshotIndex += 1;
+                    console.log(error);
+               });
+            } else if (json.type == "capture-run") {
+                exec('ditto screenshots/screen.jpeg screenshots/' + json.filename + '/' + runScreenshotIndex + '.jpeg', function(error, stdout, stderr) {
+                    runScreenshotIndex += 1;
+                    console.log(error);
                });
             }
         }
