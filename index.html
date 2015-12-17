@@ -78,6 +78,8 @@
     var startRecording = function () {
       console.log("Started recording");
       record = true;
+      var strToSend = JSON.stringify({"type":"clear"});
+      connection.send(strToSend);
     };
 
     var stopRecording = function () {

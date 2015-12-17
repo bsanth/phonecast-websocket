@@ -69,6 +69,9 @@ wsServer.on('request', function(request) {
                     runScreenshotIndex += 1;
                     console.log(error);
                });
+            } else if (json.type == "clear") {
+                screenshotIndex = 0;
+                runScreenshotIndex = 0;
             }
         }
     });
