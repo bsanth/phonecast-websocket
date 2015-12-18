@@ -63,6 +63,7 @@ wsServer.on('request', function(request) {
                 exec('ditto screenshots/screen.jpeg screenshots/' + json.filename + '/' + screenshotIndex + '.jpeg', function(error, stdout, stderr) {
                     screenshotIndex += 1;
                     console.log(error);
+                    connection.send('done');
                });
             } else if (json.type == "capture-run") {
                 exec('ditto screenshots/screen.jpeg screenshots/' + json.filename + '/' + runScreenshotIndex + '.jpeg', function(error, stdout, stderr) {
