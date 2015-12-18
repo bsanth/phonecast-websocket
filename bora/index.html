@@ -17,7 +17,7 @@
             </div>
          </header>
 
-         <section role="main" ng-repeat="result in results" ng-show="percents[$index] > filterPercent">
+         <section role="main" ng-repeat="result in results" ng-show="percents[$index] >= filterPercent">
          <b>{{percents[$index]}}%</b> Percent mismatch
             <div class="test-result-container">
                <div class="item">

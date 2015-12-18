@@ -1,57 +1,57 @@
-var recordedActions=[];
-        var record = false;
-        var screenshotIndex = 0;
-        var runScreenshotIndex = 0;
-        var initTime;
+var recordedActions = [];
+var record = false;
+var screenshotIndex = 0;
+var runScreenshotIndex = 0;
+var initTime;
 
-      // if user is running mozilla then use it's built-in WebSocket
-        window.WebSocket = window.WebSocket || window.MozWebSocket;
+// if user is running mozilla then use it's built-in WebSocket
+window.WebSocket = window.WebSocket || window.MozWebSocket;
 
-        var connection = new WebSocket('ws://127.0.0.1:1337');
+var connection = new WebSocket('ws://127.0.0.1:1337');
 
-        connection.onopen = function () {
-            // connection is opened and ready to use
-            connection.send(JSON.stringify({"type":"dimensions"}));
-        };
+connection.onopen = function () {
+   // connection is opened and ready to use
+   connection.send(JSON.stringify({"type":"dimensions"}));
+};
 
-        connection.onerror = function (error) {
-            // an error occurred when sending/receiving data
-        };
+connection.onerror = function (error) {
+   // an error occurred when sending/receiving data
+};
 
-        connection.onmessage = function (message) {
-            // try to decode json (I assume that each message from server is json)
-            try {
-                console.log(message.data);
-                if(message.data === 'done') {
-                  //setTimeout(displayImage,10000);
-                  setTimeout(displayImage,0);
-                } else {
-                   var json = JSON.parse(message.data);
-                  $("#screenshot").width(parseInt(json.width)/3);
-                  $("#screenshot").height(parseInt(json.height)/3);
-                }
-            } catch (e) {
-                console.log('This doesn\'t look like a valid JSON: ', message.data);
-                return;
-            }
-            // handle incoming message
-        };
+connection.onmessage = function (message) {
+   // try to decode json (I assume that each message from server is json)
+   try {
+       console.log(message.data);
+       if(message.data === 'done') {
+         //setTimeout(displayImage,10000);
+         setTimeout(displayImage,0);
+       } else {
+          var json = JSON.parse(message.data);
+         $("#screenshot").width(parseInt(json.width)/3);
+         $("#screenshot").height(parseInt(json.height)/3);
+       }
+   } catch (e) {
+       console.log('This doesn\'t look like a valid JSON: ', message.data);
+       return;
+   }
+   // handle incoming message
+};
 
-       function fetchBlob(uri, callback) {
-         var xhr = new XMLHttpRequest();
-         xhr.open('GET', uri, true);
-         xhr.responseType = 'arraybuffer';
+function fetchBlob(uri, callback) {
+   var xhr = new XMLHttpRequest();
+   xhr.open('GET', uri, true);
+   xhr.responseType = 'arraybuffer';
 
-         xhr.onload = function(e) {
-           if (this.status == 200) {
-             var blob = this.response;
-             if (callback) {
-               callback(blob);
-             }
-           }
-         };
-         xhr.send();
-       };
+   xhr.onload = function(e) {
+      if (this.status == 200) {
+       var blob = this.response;
+       if (callback) {
+         callback(blob);
+       }
+     }
+   };
+   xhr.send();
+};
 
        function _arrayBufferToBase64(buffer) {
            var binary = '';
