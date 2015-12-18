@@ -6,6 +6,7 @@
     var record = false;
     var screenshotIndex = 0;
     var runScreenshotIndex = 0;
+    var initTime;
 
   // if user is running mozilla then use it's built-in WebSocket
     window.WebSocket = window.WebSocket || window.MozWebSocket;
@@ -75,11 +76,18 @@
       console.log(recordedActions);
     };
 
+    var getTimeGap = function () {
+      var prevTime = initTime;
+      initTime = Date.now();
+      return initTime - prevTime;
+    }
+
     var startRecording = function () {
       console.log("Started recording");
       record = true;
       var strToSend = JSON.stringify({"type":"clear"});
       connection.send(strToSend);
+      initTime = Date.now();
     };
 
     var stopRecording = function () {
@@ -92,6 +100,7 @@
       screenshotIndex += 1;
       var strToSend = JSON.stringify({"type":"capture", "filename":"test"});
       if(record) {
+        recordedActions.push(getTimeGap());
         recordedActions.push(JSON.stringify({"type":"capture-run", "filename":"run"}));
       }
       connection.send(strToSend);
@@ -99,23 +108,25 @@
 
     var intervalRef;
     var replayActions = function () {
-      console.log("Replaying next action");
       record = false;
-      if(recordedActions[0] == JSON.stringify({"type":"capture-run", "filename":"run"})) {
-        console.log("RUN CAPTURE");
-        intervalRef = setTimeout(play, 2000);
-      } else {
-        intervalRef = setTimeout(play, 1000);
-      }
+      // if(recordedActions[0] == JSON.stringify({"type":"capture-run", "filename":"run"})) {
+      //   console.log("RUN CAPTURE");
+      //   intervalRef = setTimeout(play, 2000);
+      // } else {
+      //   intervalRef = setTimeout(play, 1000);
+      // }
+      intervalRef = setTimeout(play, recordedActions.shift());
     };
 
     var play = function () {
       var strToSend = recordedActions.shift();
+      console.log("Replaying next action " + JSON.parse(strToSend).type);
       connection.send(strToSend);
       if(recordedActions.length === 0) {
         console.log("Replay done.");
       } else {
         if(strToSend == JSON.stringify({"type":"capture-run", "filename":"run"})) {
+          console.log("Capture State");
           setTimeout(replayActions, 500);
         } else {
           replayActions();
@@ -134,6 +145,7 @@
          tap:function(e, target) {
             var strToSend = JSON.stringify({ "x": e.offsetX*3, "y": e.offsetY*3, "type":"click"});
             if(record) {
+              recordedActions.push(getTimeGap());
               recordedActions.push(strToSend);
             }
             connection.send(strToSend);
@@ -150,6 +162,7 @@
             };
             var strToSend = JSON.stringify(jsonString);
             if(record) {
+              recordedActions.push(getTimeGap());
               recordedActions.push(strToSend);
             }
             connection.send(strToSend);
@@ -164,6 +177,7 @@
             event.preventDefault();
             var strToSend = JSON.stringify({ "key": 66, "type":"key"});
             if(record) {
+              recordedActions.push(getTimeGap());
               recordedActions.push(strToSend);
             }
             connection.send(strToSend);
@@ -173,12 +187,14 @@
             }
             var strToSend = JSON.stringify({ "key": "%s", "type":"key"});
             if(record) {
+              recordedActions.push(getTimeGap());
               recordedActions.push(strToSend);
             }
             connection.send(strToSend);
         } else {
             var strToSend = JSON.stringify({ "key": String.fromCharCode(event.keyCode), "type":"key"});
             if(record) {
+              recordedActions.push(getTimeGap());
               recordedActions.push(strToSend);
             }
             connection.send(strToSend);
@@ -190,6 +206,7 @@
             event.preventDefault();
             var strToSend = JSON.stringify({ "key": 67, "type":"key"});
             if(record) {
+              recordedActions.push(getTimeGap());
               recordedActions.push(strToSend);
             }
             connection.send(strToSend);
