@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html ng-app="bora">
+   <head>
+      <meta charset="utf-8">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+      <title>EZTestFarm</title>
+      <meta name="description" content="">
+      <meta name="viewport" content="width=device-width">
+      <link rel="stylesheet" href="libs/twitter-bootstrap/bootstrap.min.css">
+      <link rel="stylesheet" href="demoassets/resemble.css?v1">
+   </head>
+   <body>
+      <div class="container" ng-controller="TestResultController">
+         <header>
+            <div class="page-header">
+               <b>Test results</b> | Filter: <input ng-model="filterPercent" type="text"></input>%
+            </div>
+         </header>
+
+         <section role="main" ng-repeat="result in results" ng-show="percents[$index] > filterPercent">
+         <b>{{percents[$index]}}%</b> Percent mismatch
+            <div class="test-result-container">
+               <div class="item">
+                  <img ng-src="{{src[$index]}}">
+               </div>
+               <div class="item">
+                  <img ng-src="{{result}}">
+               </div>
+                <div class="item">
+                  <img ng-src="{{diffs[$index]}}">
+               </div>
+               <!-- <div id="image-diff" class="item">
+                  Diff will appear here.
+               </div> -->
+           </div>
+           <hr />
+         </section>
+      </div>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.2/angular.min.js"></script>
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+      <script src="resemble.js"></script>
+      <script src="demoassets/main.js"></script>
+      <script src="app.js"></script>
+   </body>
+</html>
